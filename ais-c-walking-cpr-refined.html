@@ -688,6 +688,93 @@
         .disclaimer-box strong {
             color: var(--accent-amber);
         }
+
+        /* Cookie Consent */
+        .cookie-banner {
+            position: fixed;
+            left: 1rem;
+            right: 1rem;
+            bottom: 1rem;
+            z-index: 1000;
+            background: rgba(26, 26, 35, 0.96);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1rem 1.25rem;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(8px);
+        }
+
+        .cookie-banner[hidden] {
+            display: none;
+        }
+
+        .cookie-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.35rem;
+        }
+
+        .cookie-text {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+        }
+
+        .cookie-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            margin-top: 0.85rem;
+        }
+
+        .cookie-btn {
+            appearance: none;
+            border: 1px solid transparent;
+            border-radius: 9px;
+            padding: 0.55rem 0.9rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .cookie-btn.primary {
+            background: var(--accent-cyan-dim);
+            border-color: rgba(0, 212, 255, 0.45);
+            color: var(--accent-cyan);
+        }
+
+        .cookie-btn.primary:hover {
+            background: rgba(0, 212, 255, 0.22);
+        }
+
+        .cookie-btn.secondary {
+            background: var(--bg-tertiary);
+            border-color: var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .cookie-btn.secondary:hover {
+            border-color: var(--text-secondary);
+            color: var(--text-primary);
+        }
+
+        @media (max-width: 620px) {
+            .cookie-banner {
+                left: 0.75rem;
+                right: 0.75rem;
+                bottom: 0.75rem;
+                padding: 0.9rem 1rem;
+            }
+
+            .cookie-actions {
+                flex-direction: column;
+            }
+
+            .cookie-btn {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -927,18 +1014,101 @@
         </div>
     </div>
 
+    <div class="cookie-banner" id="cookie-banner" role="dialog" aria-live="polite" aria-label="Cookie notice" hidden>
+        <div class="cookie-title">Minimal cookies notice</div>
+        <p class="cookie-text">
+            This website uses essential browser storage to run the tool. You can also allow minimal anonymous analytics cookies to help us improve the calculator.
+        </p>
+        <div class="cookie-actions">
+            <button type="button" class="cookie-btn primary" id="cookie-accept">Accept minimal cookies</button>
+            <button type="button" class="cookie-btn secondary" id="cookie-essential-only">Use essential only</button>
+        </div>
+    </div>
+
     <script>
         const ANALYTICS_MEASUREMENT_ID = 'G-YVMNVPJ9S1';
         const ANALYTICS_PLACEHOLDER_ID = 'G-XXXXXXXXXX';
+        const COOKIE_CONSENT_KEY = 'aiscwalking_cookie_consent_v1';
+        const CONSENT_GRANTED = 'granted';
+        const CONSENT_DENIED = 'denied';
         let lastTrackedUsageState = '';
         let hasTrackedFirstInteraction = false;
+        let analyticsInitialized = false;
 
         function analyticsEnabled() {
             return /^G-[A-Z0-9]+$/i.test(ANALYTICS_MEASUREMENT_ID) && ANALYTICS_MEASUREMENT_ID !== ANALYTICS_PLACEHOLDER_ID;
         }
 
-        function initializeAnalytics() {
+        function getConsentChoice() {
+            try {
+                return localStorage.getItem(COOKIE_CONSENT_KEY);
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function setConsentChoice(choice) {
+            try {
+                localStorage.setItem(COOKIE_CONSENT_KEY, choice);
+            } catch (error) {
+            }
+        }
+
+        function hasAnalyticsConsent() {
+            return getConsentChoice() === CONSENT_GRANTED;
+        }
+
+        function showCookieBanner() {
+            const banner = document.getElementById('cookie-banner');
+            if (!banner) return;
+            banner.hidden = false;
+        }
+
+        function hideCookieBanner() {
+            const banner = document.getElementById('cookie-banner');
+            if (!banner) return;
+            banner.hidden = true;
+        }
+
+        function applyConsentChoice(choice) {
+            setConsentChoice(choice);
+            hideCookieBanner();
+
+            if (choice === CONSENT_GRANTED) {
+                initializeAnalytics();
+                trackEvent('consent_updated', { analytics_storage: CONSENT_GRANTED });
+            }
+        }
+
+        function setupCookieBanner() {
             if (!analyticsEnabled()) return;
+
+            const acceptButton = document.getElementById('cookie-accept');
+            const essentialOnlyButton = document.getElementById('cookie-essential-only');
+
+            if (acceptButton) {
+                acceptButton.addEventListener('click', () => applyConsentChoice(CONSENT_GRANTED));
+            }
+            if (essentialOnlyButton) {
+                essentialOnlyButton.addEventListener('click', () => applyConsentChoice(CONSENT_DENIED));
+            }
+
+            const existingChoice = getConsentChoice();
+            if (existingChoice === CONSENT_GRANTED) {
+                initializeAnalytics();
+                return;
+            }
+            if (existingChoice === CONSENT_DENIED) {
+                hideCookieBanner();
+                return;
+            }
+
+            showCookieBanner();
+        }
+
+        function initializeAnalytics() {
+            if (!analyticsEnabled() || !hasAnalyticsConsent() || analyticsInitialized) return;
+            analyticsInitialized = true;
 
             window.dataLayer = window.dataLayer || [];
             window.gtag = window.gtag || function() { window.dataLayer.push(arguments); };
@@ -984,7 +1154,7 @@
         }
 
         function trackToolUsage(totalScore, selectedMyotomeCount, ageGroup) {
-            if (!analyticsEnabled()) return;
+            if (!analyticsEnabled() || !analyticsInitialized) return;
 
             const scoreBucket = getScoreBucket(totalScore);
             const stateKey = totalScore + '|' + selectedMyotomeCount + '|' + ageGroup + '|' + scoreBucket;
@@ -1026,7 +1196,7 @@
             updateResult(total);
             updateDistHighlight(total);
             if (isInitial) return;
-            if (!hasTrackedFirstInteraction) {
+            if (analyticsInitialized && !hasTrackedFirstInteraction) {
                 trackEvent('first_interaction');
                 hasTrackedFirstInteraction = true;
             }
@@ -1119,7 +1289,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            initializeAnalytics();
+            setupCookieBanner();
             calculateScore({ isInitial: true });
         });
     </script>

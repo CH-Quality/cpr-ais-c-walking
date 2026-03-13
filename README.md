@@ -14,6 +14,10 @@ This tool reflects the manuscript:
 - Bedside score points: `L2 +1`, `L3 +2`, `L4 +1`, `S1 +1`, `Age >=50 -2`, `Age >=65 -5`
 - Interpretation thresholds: `>3 = Likely Walk`, `<-3 = Likely No Walk`, otherwise `Uncertain`
 
+## Authors
+
+Andrew C. Smith; Jeffrey Kepple; Kenneth A. Weber II; Wesley A. Thornton; Jordan R. Connor; Jesse Villines; Candace Tefertiller; Andrew Park; Jeffrey Berliner; Christina Draganich.
+
 ## Repository Purpose
 
 This repository contains a standalone HTML interface to calculate and display the bedside score for clinical/research workflow support.
