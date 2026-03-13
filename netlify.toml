@@ -2,6 +2,18 @@
   publish = "."
 
 [[redirects]]
+  from = "http://aiscwalkingcpr.org/*"
+  to = "https://aiscwalkingcpr.org/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "http://www.aiscwalkingcpr.org/*"
+  to = "https://aiscwalkingcpr.org/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
   from = "https://www.aiscwalkingcpr.org/*"
   to = "https://aiscwalkingcpr.org/:splat"
   status = 301
@@ -12,3 +24,8 @@
   to = "https://aiscwalkingcpr.org/:splat"
   status = 301
   force = true
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Strict-Transport-Security = "max-age=31536000"
