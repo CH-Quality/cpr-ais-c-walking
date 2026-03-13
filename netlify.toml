@@ -1,2 +1,14 @@
 [build]
   publish = "."
+
+[[redirects]]
+  from = "https://www.aiscwalkingcpr.org/*"
+  to = "https://aiscwalkingcpr.org/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://aiscwalkingcpr.netlify.app/*"
+  to = "https://aiscwalkingcpr.org/:splat"
+  status = 301
+  force = true

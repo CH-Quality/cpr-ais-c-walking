@@ -25,9 +25,20 @@ Configured for static hosting (Netlify + GitHub workflow).
 - Entry file: `index.html`
 - Publish directory: project root (`.`)
 - Netlify config: `netlify.toml`
+- Canonical domain: `https://aiscwalkingcpr.org/`
+
+## SEO + Analytics
+
+- Canonical/meta tags and JSON-LD are configured in `index.html`
+- Search indexing helpers are included as `robots.txt` and `sitemap.xml`
+- Redirects enforce canonical host in `netlify.toml`
+- Google Analytics 4 scaffold is enabled in `index.html`
+- Set your GA4 ID by replacing `G-XXXXXXXXXX` in `ANALYTICS_MEASUREMENT_ID`
 
 ## Files
 
 - `index.html` — deploy entry page
 - `ais-c-walking-cpr-refined.html` — original working file snapshot
 - `netlify.toml` — Netlify deploy configuration
+- `robots.txt` — crawler guidance and sitemap location
+- `sitemap.xml` — XML sitemap for canonical domain

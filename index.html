@@ -4,6 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AIS C Walking Recovery — Clinical Prediction Tool</title>
+    <meta name="description" content="Bedside clinical prediction tool for one-year walking recovery in AIS C spinal cord injury using L2, L3, L4, S1 motor strength and age.">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <meta name="theme-color" content="#0f0f13">
+    <link rel="canonical" href="https://aiscwalkingcpr.org/">
+
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="AIS C Walking CPR">
+    <meta property="og:title" content="AIS C Walking Recovery Bedside Score">
+    <meta property="og:description" content="Clinical prediction rule for one-year walking recovery in AIS C spinal cord injury.">
+    <meta property="og:url" content="https://aiscwalkingcpr.org/">
+    <meta property="og:locale" content="en_US">
+
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="AIS C Walking Recovery Bedside Score">
+    <meta name="twitter:description" content="Clinical prediction rule for one-year walking recovery in AIS C spinal cord injury.">
+
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            "name": "AIS C Walking Recovery Bedside Score",
+            "url": "https://aiscwalkingcpr.org/",
+            "applicationCategory": "MedicalApplication",
+            "operatingSystem": "Any",
+            "inLanguage": "en-US",
+            "isAccessibleForFree": true,
+            "description": "Bedside clinical prediction rule for one-year walking recovery in AIS C spinal cord injury."
+        }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -918,6 +947,7 @@
         const ANALYTICS_MEASUREMENT_ID = 'G-XXXXXXXXXX';
         const ANALYTICS_PLACEHOLDER_ID = 'G-XXXXXXXXXX';
         let lastTrackedUsageState = '';
+        let hasTrackedFirstInteraction = false;
 
         function analyticsEnabled() {
             return /^G-[A-Z0-9]+$/i.test(ANALYTICS_MEASUREMENT_ID) && ANALYTICS_MEASUREMENT_ID !== ANALYTICS_PLACEHOLDER_ID;
@@ -928,15 +958,28 @@
 
             window.dataLayer = window.dataLayer || [];
             window.gtag = window.gtag || function() { window.dataLayer.push(arguments); };
+            window.gtag('consent', 'default', {
+                ad_storage: 'denied',
+                ad_user_data: 'denied',
+                ad_personalization: 'denied',
+                analytics_storage: 'granted'
+            });
             window.gtag('js', new Date());
-            window.gtag('config', ANALYTICS_MEASUREMENT_ID);
+            window.gtag('config', ANALYTICS_MEASUREMENT_ID, {
+                anonymize_ip: true,
+                allow_google_signals: false,
+                allow_ad_personalization_signals: false,
+                transport_type: 'beacon'
+            });
 
             const gtagScript = document.createElement('script');
             gtagScript.async = true;
             gtagScript.src = 'https://www.googletagmanager.com/gtag/js?id=' + ANALYTICS_MEASUREMENT_ID;
             document.head.appendChild(gtagScript);
 
-            trackEvent('tool_loaded');
+            trackEvent('tool_loaded', {
+                page_path: window.location.pathname
+            });
         }
 
         function trackEvent(eventName, params = {}) {
@@ -965,6 +1008,7 @@
 
             trackEvent('score_updated', {
                 score_bucket: scoreBucket,
+                score_total: totalScore,
                 selected_myotome_count: selectedMyotomeCount,
                 age_group: ageGroup
             });
@@ -977,7 +1021,8 @@
             uncertain: { acc: '—', sens: '—', spec: '—', ppv: '—', npv: '—' }
         };
 
-        function calculateScore() {
+        function calculateScore(options = {}) {
+            const isInitial = options.isInitial === true;
             const l2 = document.getElementById('l2').checked ? 1 : 0;
             const l3 = document.getElementById('l3').checked ? 2 : 0;
             const l4 = document.getElementById('l4').checked ? 1 : 0;
@@ -996,6 +1041,11 @@
             updateScale(total);
             updateResult(total);
             updateDistHighlight(total);
+            if (isInitial) return;
+            if (!hasTrackedFirstInteraction) {
+                trackEvent('first_interaction');
+                hasTrackedFirstInteraction = true;
+            }
             trackToolUsage(total, selectedMyotomeCount, ageGroup);
         }
 
@@ -1086,7 +1136,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             initializeAnalytics();
-            calculateScore();
+            calculateScore({ isInitial: true });
         });
     </script>
 </body>
