@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIS C Walking Recovery — Clinical Prediction Tool</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f0f13;
+            --bg-secondary: #1a1a23;
+            --bg-tertiary: #24242f;
+            --bg-hover: #2d2d3a;
+            --border-color: #3a3a4a;
+            --text-primary: #f0f0f5;
+            --text-secondary: #a0a0b0;
+            --text-muted: #6a6a7a;
+            --accent-cyan: #00d4ff;
+            --accent-cyan-dim: rgba(0, 212, 255, 0.15);
+            --accent-green: #00ff88;
+            --accent-green-dim: rgba(0, 255, 136, 0.12);
+            --accent-red: #ff4466;
+            --accent-red-dim: rgba(255, 68, 102, 0.12);
+            --accent-amber: #ffaa00;
+            --accent-amber-dim: rgba(255, 170, 0, 0.12);
+            --gradient-glow: radial-gradient(ellipse at top, rgba(0, 212, 255, 0.08) 0%, transparent 60%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            background-image: var(--gradient-glow);
+            min-height: 100vh;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        .logo-mark {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 1rem;
+            background: linear-gradient(135deg, var(--accent-cyan) 0%, var(--accent-green) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--bg-primary);
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.03em;
+        }
+
+        .subtitle {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.75rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+            opacity: 0.3;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--accent-cyan-dim);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-icon svg {
+            width: 18px;
+            height: 18px;
+            stroke: var(--accent-cyan);
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            letter-spacing: -0.01em;
+        }
+
+        /* Myotome Grid */
+        .myotome-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+
+        @media (max-width: 700px) {
+            .myotome-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .myotome-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .myotome-card:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent-cyan);
+        }
+
+        .myotome-card.active {
+            background: var(--accent-cyan-dim);
+            border-color: var(--accent-cyan);
+        }
+
+        .myotome-card.active::after {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 12px;
+            padding: 1px;
+            background: linear-gradient(135deg, var(--accent-cyan), transparent);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        .myotome-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+        }
+
+        .myotome-level {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .myotome-card.active .myotome-level {
+            color: var(--accent-cyan);
+        }
+
+        .myotome-points {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--accent-green);
+            background: var(--accent-green-dim);
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+        }
+
+        .myotome-name {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .myotome-muscle {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .myotome-checkbox {
+            display: none;
+        }
+
+        /* Age Selection */
+        .age-section {
+            margin-top: 1.75rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .section-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .age-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+        }
+
+        @media (max-width: 500px) {
+            .age-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .age-option {
+            position: relative;
+        }
+
+        .age-option input {
+            display: none;
+        }
+
+        .age-btn {
+            display: block;
+            width: 100%;
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .age-btn:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent-cyan);
+        }
+
+        .age-option input:checked + .age-btn {
+            background: var(--accent-cyan-dim);
+            border-color: var(--accent-cyan);
+        }
+
+        .age-range {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .age-points {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .age-points.neutral {
+            color: var(--text-muted);
+        }
+
+        .age-points.negative {
+            color: var(--accent-red);
+        }
+
+        /* Score Display */
+        .score-display {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        @media (max-width: 650px) {
+            .score-display {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .score-dial {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            margin: 0 auto;
+        }
+
+        .score-ring {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(
+                var(--accent-red) 0deg 72deg,
+                var(--accent-amber) 72deg 288deg,
+                var(--accent-green) 288deg 360deg
+            );
+            padding: 8px;
+        }
+
+        .score-inner {
+            width: 100%;
+            height: 100%;
+            background: var(--bg-secondary);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .score-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 3.5rem;
+            font-weight: 700;
+            line-height: 1;
+            transition: color 0.3s ease;
+        }
+
+        .score-value.positive {
+            color: var(--accent-green);
+        }
+
+        .score-value.negative {
+            color: var(--accent-red);
+        }
+
+        .score-value.neutral {
+            color: var(--accent-amber);
+        }
+
+        .score-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-top: 0.5rem;
+        }
+
+        .score-breakdown {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .breakdown-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.6rem 0.9rem;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .breakdown-row.active {
+            background: var(--accent-cyan-dim);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+        }
+
+        .breakdown-name {
+            color: var(--text-secondary);
+        }
+
+        .breakdown-pts {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+        }
+
+        .breakdown-pts.pos {
+            color: var(--accent-green);
+        }
+
+        .breakdown-pts.neg {
+            color: var(--accent-red);
+        }
+
+        .breakdown-pts.zero {
+            color: var(--text-muted);
+        }
+
+        /* Visual Scale */
+        .scale-container {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .scale-track {
+            position: relative;
+            height: 12px;
+            border-radius: 6px;
+            background: linear-gradient(to right,
+                var(--accent-red) 0%,
+                var(--accent-red) 20%,
+                var(--accent-amber) 20%,
+                var(--accent-amber) 80%,
+                var(--accent-green) 80%,
+                var(--accent-green) 100%
+            );
+            margin: 1.5rem 0;
+        }
+
+        .scale-marker {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            background: var(--text-primary);
+            border: 3px solid var(--bg-primary);
+            border-radius: 50%;
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
+            transition: left 0.3s ease;
+        }
+
+        .scale-thresholds {
+            position: absolute;
+            top: -24px;
+            width: 100%;
+        }
+
+        .threshold-mark {
+            position: absolute;
+            transform: translateX(-50%);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .scale-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Result Card */
+        .result-card {
+            padding: 2rem;
+            border-radius: 16px;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 2px solid;
+        }
+
+        .result-card.likely-walk {
+            background: var(--accent-green-dim);
+            border-color: var(--accent-green);
+        }
+
+        .result-card.likely-no-walk {
+            background: var(--accent-red-dim);
+            border-color: var(--accent-red);
+        }
+
+        .result-card.uncertain {
+            background: var(--accent-amber-dim);
+            border-color: var(--accent-amber);
+        }
+
+        .result-icon {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 1rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+        }
+
+        .likely-walk .result-icon {
+            background: rgba(0, 255, 136, 0.2);
+        }
+
+        .likely-no-walk .result-icon {
+            background: rgba(255, 68, 102, 0.2);
+        }
+
+        .uncertain .result-icon {
+            background: rgba(255, 170, 0, 0.2);
+        }
+
+        .result-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .likely-walk .result-title {
+            color: var(--accent-green);
+        }
+
+        .likely-no-walk .result-title {
+            color: var(--accent-red);
+        }
+
+        .uncertain .result-title {
+            color: var(--accent-amber);
+        }
+
+        .result-desc {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* Metrics */
+        .metrics-row {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .metric-chip {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem 1.25rem;
+            text-align: center;
+            min-width: 90px;
+        }
+
+        .metric-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+        }
+
+        .metric-name {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-top: 0.25rem;
+        }
+
+        /* Distribution */
+        .dist-bar-container {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .dist-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+        }
+
+        .dist-bar {
+            display: flex;
+            height: 28px;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .dist-seg {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--bg-primary);
+            transition: all 0.3s ease;
+        }
+
+        .dist-seg.highlight {
+            box-shadow: inset 0 0 0 2px var(--text-primary);
+        }
+
+        .dist-no-walk {
+            width: 7%;
+            background: var(--accent-red);
+        }
+
+        .dist-uncertain {
+            width: 84%;
+            background: var(--accent-amber);
+        }
+
+        .dist-walk {
+            width: 9%;
+            background: var(--accent-green);
+        }
+
+        /* Info Section */
+        .info-content {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .info-content h3 {
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin: 1.25rem 0 0.5rem;
+        }
+
+        .info-content h3:first-child {
+            margin-top: 0;
+        }
+
+        .citation-box {
+            background: var(--bg-tertiary);
+            border-left: 3px solid var(--accent-cyan);
+            padding: 1rem 1.25rem;
+            margin: 1.25rem 0;
+            border-radius: 0 8px 8px 0;
+            font-style: italic;
+            font-size: 0.85rem;
+        }
+
+        .disclaimer-box {
+            background: var(--accent-amber-dim);
+            border: 1px solid rgba(255, 170, 0, 0.3);
+            padding: 1rem 1.25rem;
+            border-radius: 10px;
+            margin-top: 1.25rem;
+            font-size: 0.85rem;
+        }
+
+        .disclaimer-box strong {
+            color: var(--accent-amber);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-mark">C</div>
+            <h1>AIS C Walking Recovery Prediction</h1>
+            <p class="subtitle">Clinical Prediction Rule for One-Year Walking Outcomes</p>
+        </header>
+
+        <!-- Motor Examination -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 1-6.23.693L5 15.5m14.8-.2-.8.2m-13 0-1-.25m0 0L3.5 18l.25 1m.5-3.75.75 3m12.5-3 .5 3m.25-3.25L18 19l-.25 1m-13.5-1 .25-1" />
+                    </svg>
+                </div>
+                <span class="card-title">Motor Examination Findings</span>
+            </div>
+
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.25rem;">
+                Select each myotome with strength ≥3/5 on either side:
+            </p>
+
+            <div class="myotome-grid">
+                <label class="myotome-card" id="card-l2">
+                    <input type="checkbox" class="myotome-checkbox" id="l2" onchange="calculateScore()">
+                    <div class="myotome-header">
+                        <span class="myotome-level">L2</span>
+                        <span class="myotome-points">+1</span>
+                    </div>
+                    <div class="myotome-name">Hip Flexion</div>
+                    <div class="myotome-muscle">Iliopsoas</div>
+                </label>
+
+                <label class="myotome-card" id="card-l3">
+                    <input type="checkbox" class="myotome-checkbox" id="l3" onchange="calculateScore()">
+                    <div class="myotome-header">
+                        <span class="myotome-level">L3</span>
+                        <span class="myotome-points">+2</span>
+                    </div>
+                    <div class="myotome-name">Knee Extension</div>
+                    <div class="myotome-muscle">Quadriceps</div>
+                </label>
+
+                <label class="myotome-card" id="card-l4">
+                    <input type="checkbox" class="myotome-checkbox" id="l4" onchange="calculateScore()">
+                    <div class="myotome-header">
+                        <span class="myotome-level">L4</span>
+                        <span class="myotome-points">+1</span>
+                    </div>
+                    <div class="myotome-name">Dorsiflexion</div>
+                    <div class="myotome-muscle">Tibialis Anterior</div>
+                </label>
+
+                <label class="myotome-card" id="card-s1">
+                    <input type="checkbox" class="myotome-checkbox" id="s1" onchange="calculateScore()">
+                    <div class="myotome-header">
+                        <span class="myotome-level">S1</span>
+                        <span class="myotome-points">+1</span>
+                    </div>
+                    <div class="myotome-name">Plantarflexion</div>
+                    <div class="myotome-muscle">Gastrocnemius</div>
+                </label>
+            </div>
+
+            <div class="age-section">
+                <div class="section-label">Patient Age</div>
+                <div class="age-grid">
+                    <label class="age-option">
+                        <input type="radio" name="age" id="age-under50" value="under50" checked onchange="calculateScore()">
+                        <div class="age-btn">
+                            <div class="age-range">&lt; 50 years</div>
+                            <div class="age-points neutral">0 pts</div>
+                        </div>
+                    </label>
+                    <label class="age-option">
+                        <input type="radio" name="age" id="age-50-64" value="50-64" onchange="calculateScore()">
+                        <div class="age-btn">
+                            <div class="age-range">50–64 years</div>
+                            <div class="age-points negative">−2 pts</div>
+                        </div>
+                    </label>
+                    <label class="age-option">
+                        <input type="radio" name="age" id="age-65plus" value="65plus" onchange="calculateScore()">
+                        <div class="age-btn">
+                            <div class="age-range">≥ 65 years</div>
+                            <div class="age-points negative">−5 pts</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Score Calculation -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75V18m-7.5-6.75h.008v.008H8.25v-.008Zm0 2.25h.008v.008H8.25V13.5Zm0 2.25h.008v.008H8.25v-.008Zm0 2.25h.008v.008H8.25V18Zm2.498-6.75h.007v.008h-.007v-.008Zm0 2.25h.007v.008h-.007V13.5Zm0 2.25h.007v.008h-.007v-.008Zm0 2.25h.007v.008h-.007V18Zm2.504-6.75h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V13.5Zm4.498-1.5h.008v.008h-.008V12Zm0 2.25h.008v.008h-.008v-.008Z" />
+                    </svg>
+                </div>
+                <span class="card-title">Score Calculation</span>
+            </div>
+
+            <div class="score-display">
+                <div class="score-dial">
+                    <div class="score-ring">
+                        <div class="score-inner">
+                            <div class="score-value neutral" id="total-score">0</div>
+                            <div class="score-label">Total Score</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="score-breakdown">
+                    <div class="breakdown-row" id="row-l2">
+                        <span class="breakdown-name">L2 — Hip Flexion</span>
+                        <span class="breakdown-pts zero" id="pts-l2">0</span>
+                    </div>
+                    <div class="breakdown-row" id="row-l3">
+                        <span class="breakdown-name">L3 — Quadriceps</span>
+                        <span class="breakdown-pts zero" id="pts-l3">0</span>
+                    </div>
+                    <div class="breakdown-row" id="row-l4">
+                        <span class="breakdown-name">L4 — Dorsiflexion</span>
+                        <span class="breakdown-pts zero" id="pts-l4">0</span>
+                    </div>
+                    <div class="breakdown-row" id="row-s1">
+                        <span class="breakdown-name">S1 — Plantarflexion</span>
+                        <span class="breakdown-pts zero" id="pts-s1">0</span>
+                    </div>
+                    <div class="breakdown-row" id="row-age">
+                        <span class="breakdown-name">Age Adjustment</span>
+                        <span class="breakdown-pts zero" id="pts-age">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="scale-container">
+                <div class="scale-track">
+                    <div class="scale-thresholds">
+                        <span class="threshold-mark" style="left: 20%;">−3</span>
+                        <span class="threshold-mark" style="left: 80%;">+3</span>
+                    </div>
+                    <div class="scale-marker" id="scale-marker" style="left: 50%;"></div>
+                </div>
+                <div class="scale-labels">
+                    <span>−5 (Likely No Walk)</span>
+                    <span>Uncertain</span>
+                    <span>+5 (Likely Walk)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    </svg>
+                </div>
+                <span class="card-title">Prediction Result</span>
+            </div>
+
+            <div class="result-card uncertain" id="result-card">
+                <div class="result-icon" id="result-icon">?</div>
+                <div class="result-title" id="result-title">Uncertain</div>
+                <div class="result-desc" id="result-desc">
+                    Score falls within the uncertain range (−3 to +3). Additional clinical factors may help refine the prediction.
+                </div>
+            </div>
+
+            <div class="metrics-row" id="metrics-row">
+                <div class="metric-chip">
+                    <div class="metric-val" id="m-acc">—</div>
+                    <div class="metric-name">Accuracy</div>
+                </div>
+                <div class="metric-chip">
+                    <div class="metric-val" id="m-sens">—</div>
+                    <div class="metric-name">Sensitivity</div>
+                </div>
+                <div class="metric-chip">
+                    <div class="metric-val" id="m-spec">—</div>
+                    <div class="metric-name">Specificity</div>
+                </div>
+                <div class="metric-chip">
+                    <div class="metric-val" id="m-ppv">—</div>
+                    <div class="metric-name">PPV</div>
+                </div>
+                <div class="metric-chip">
+                    <div class="metric-val" id="m-npv">—</div>
+                    <div class="metric-name">NPV</div>
+                </div>
+            </div>
+
+            <div class="dist-bar-container">
+                <div class="dist-label">Study Cohort Distribution (Training Set)</div>
+                <div class="dist-bar">
+                    <div class="dist-seg dist-no-walk" id="d-no-walk">7%</div>
+                    <div class="dist-seg dist-uncertain" id="d-uncertain">84%</div>
+                    <div class="dist-seg dist-walk" id="d-walk">9%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- About -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
+                    </svg>
+                </div>
+                <span class="card-title">About This Prediction Rule</span>
+            </div>
+
+            <div class="info-content">
+                <h3>Background</h3>
+                <p>This clinical prediction rule (CPR) predicts one-year walking recovery in AIS C spinal cord injury. Walking recovery is defined as walking 150 ft indoors, one street block outdoors, and one flight of stairs—with or without aids.</p>
+
+                <h3>How It Works</h3>
+                <p>Points are assigned for lower extremity motor function (L2, L3, L4, S1 with ≥3/5 strength on either side) and subtracted for older age. Scores &gt;+3 predict "Likely Walk," &lt;−3 predict "Likely No Walk," otherwise "Uncertain."</p>
+
+                <h3>Study Cohort</h3>
+                <p>Developed using 1,414 adults from the SCIMS database (2000–2019) across 12 centers. Among classified cases: 81% accuracy, 92% sensitivity, 72% specificity.</p>
+
+                <div class="citation-box">
+                    Smith AC, Kepple J, Weber KA II, Thornton WA, Connor JR, Villines J, Tefertiller C, Park A, Berliner J, Draganich C. A bedside score predicts one-year walking recovery in AIS C spinal cord injury: a multisite cohort study. Accepted for publication in Spinal Cord Injury Rehabilitation, 2026.
+                </div>
+
+                <div class="disclaimer-box">
+                    <strong>Clinical Disclaimer:</strong> For educational and research purposes only. Not a substitute for clinical judgment. The rule has not undergone prospective validation.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ANALYTICS_MEASUREMENT_ID = 'G-XXXXXXXXXX';
+        const ANALYTICS_PLACEHOLDER_ID = 'G-XXXXXXXXXX';
+        let lastTrackedUsageState = '';
+
+        function analyticsEnabled() {
+            return /^G-[A-Z0-9]+$/i.test(ANALYTICS_MEASUREMENT_ID) && ANALYTICS_MEASUREMENT_ID !== ANALYTICS_PLACEHOLDER_ID;
+        }
+
+        function initializeAnalytics() {
+            if (!analyticsEnabled()) return;
+
+            window.dataLayer = window.dataLayer || [];
+            window.gtag = window.gtag || function() { window.dataLayer.push(arguments); };
+            window.gtag('js', new Date());
+            window.gtag('config', ANALYTICS_MEASUREMENT_ID);
+
+            const gtagScript = document.createElement('script');
+            gtagScript.async = true;
+            gtagScript.src = 'https://www.googletagmanager.com/gtag/js?id=' + ANALYTICS_MEASUREMENT_ID;
+            document.head.appendChild(gtagScript);
+
+            trackEvent('tool_loaded');
+        }
+
+        function trackEvent(eventName, params = {}) {
+            if (typeof window.gtag !== 'function') return;
+            window.gtag('event', eventName, params);
+        }
+
+        function getAgeGroup() {
+            if (document.getElementById('age-50-64').checked) return '50_64';
+            if (document.getElementById('age-65plus').checked) return '65_plus';
+            return 'under_50';
+        }
+
+        function getScoreBucket(score) {
+            if (score > 3) return 'likely_walk';
+            if (score < -3) return 'likely_no_walk';
+            return 'uncertain';
+        }
+
+        function trackToolUsage(totalScore, selectedMyotomeCount, ageGroup) {
+            if (!analyticsEnabled()) return;
+
+            const scoreBucket = getScoreBucket(totalScore);
+            const stateKey = totalScore + '|' + selectedMyotomeCount + '|' + ageGroup + '|' + scoreBucket;
+            if (stateKey === lastTrackedUsageState) return;
+
+            trackEvent('score_updated', {
+                score_bucket: scoreBucket,
+                selected_myotome_count: selectedMyotomeCount,
+                age_group: ageGroup
+            });
+
+            lastTrackedUsageState = stateKey;
+        }
+
+        const METRICS = {
+            classified: { acc: '81%', sens: '92%', spec: '72%', ppv: '72%', npv: '92%' },
+            uncertain: { acc: '—', sens: '—', spec: '—', ppv: '—', npv: '—' }
+        };
+
+        function calculateScore() {
+            const l2 = document.getElementById('l2').checked ? 1 : 0;
+            const l3 = document.getElementById('l3').checked ? 2 : 0;
+            const l4 = document.getElementById('l4').checked ? 1 : 0;
+            const s1 = document.getElementById('s1').checked ? 1 : 0;
+
+            let agePoints = 0;
+            if (document.getElementById('age-50-64').checked) agePoints = -2;
+            else if (document.getElementById('age-65plus').checked) agePoints = -5;
+
+            const total = l2 + l3 + l4 + s1 + agePoints;
+            const selectedMyotomeCount = [l2, l3, l4, s1].filter(val => val > 0).length;
+            const ageGroup = getAgeGroup();
+
+            updateDisplay(l2, l3, l4, s1, agePoints, total);
+            updateCardStyles();
+            updateScale(total);
+            updateResult(total);
+            updateDistHighlight(total);
+            trackToolUsage(total, selectedMyotomeCount, ageGroup);
+        }
+
+        function updateDisplay(l2, l3, l4, s1, age, total) {
+            const scoreEl = document.getElementById('total-score');
+            scoreEl.textContent = total;
+            scoreEl.className = 'score-value ' + (total > 0 ? 'positive' : total < 0 ? 'negative' : 'neutral');
+
+            updatePts('l2', l2);
+            updatePts('l3', l3);
+            updatePts('l4', l4);
+            updatePts('s1', s1);
+            updatePts('age', age);
+        }
+
+        function updatePts(id, val) {
+            const el = document.getElementById('pts-' + id);
+            const row = document.getElementById('row-' + id);
+            if (val > 0) {
+                el.textContent = '+' + val;
+                el.className = 'breakdown-pts pos';
+                row.classList.add('active');
+            } else if (val < 0) {
+                el.textContent = val;
+                el.className = 'breakdown-pts neg';
+                row.classList.add('active');
+            } else {
+                el.textContent = '0';
+                el.className = 'breakdown-pts zero';
+                row.classList.remove('active');
+            }
+        }
+
+        function updateCardStyles() {
+            ['l2', 'l3', 'l4', 's1'].forEach(id => {
+                const card = document.getElementById('card-' + id);
+                const cb = document.getElementById(id);
+                card.classList.toggle('active', cb.checked);
+            });
+        }
+
+        function updateScale(score) {
+            const min = -5, max = 5;
+            const pct = ((score - min) / (max - min)) * 100;
+            const clamped = Math.max(5, Math.min(95, pct));
+            document.getElementById('scale-marker').style.left = clamped + '%';
+        }
+
+        function updateResult(score) {
+            const card = document.getElementById('result-card');
+            const icon = document.getElementById('result-icon');
+            const title = document.getElementById('result-title');
+            const desc = document.getElementById('result-desc');
+            let m;
+
+            if (score > 3) {
+                card.className = 'result-card likely-walk';
+                icon.textContent = '✓';
+                title.textContent = 'Likely Walk';
+                desc.textContent = 'Score exceeds +3. High likelihood of walking recovery at one year.';
+                m = METRICS.classified;
+            } else if (score < -3) {
+                card.className = 'result-card likely-no-walk';
+                icon.textContent = '✗';
+                title.textContent = 'Likely No Walk';
+                desc.textContent = 'Score below −3. Low likelihood of walking recovery at one year.';
+                m = METRICS.classified;
+            } else {
+                card.className = 'result-card uncertain';
+                icon.textContent = '?';
+                title.textContent = 'Uncertain';
+                desc.textContent = 'Score in uncertain range (−3 to +3). Additional assessment recommended.';
+                m = METRICS.uncertain;
+            }
+
+            document.getElementById('m-acc').textContent = m.acc;
+            document.getElementById('m-sens').textContent = m.sens;
+            document.getElementById('m-spec').textContent = m.spec;
+            document.getElementById('m-ppv').textContent = m.ppv;
+            document.getElementById('m-npv').textContent = m.npv;
+        }
+
+        function updateDistHighlight(score) {
+            document.getElementById('d-no-walk').classList.toggle('highlight', score < -3);
+            document.getElementById('d-uncertain').classList.toggle('highlight', score >= -3 && score <= 3);
+            document.getElementById('d-walk').classList.toggle('highlight', score > 3);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeAnalytics();
+            calculateScore();
+        });
+    </script>
+</body>
+</html>
