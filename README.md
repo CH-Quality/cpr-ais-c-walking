@@ -2,7 +2,7 @@
 
 Static web implementation of a bedside clinical prediction rule (CPR) for one-year walking recovery in AIS C spinal cord injury.
 
-## Manuscript-Aligned Summary
+## Summary
 
 This tool reflects the manuscript:
 `A bedside score predicts one-year walking recovery in AIS C spinal cord injury: a multisite cohort study.`
