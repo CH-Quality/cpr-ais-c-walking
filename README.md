@@ -25,7 +25,7 @@ Configured for static hosting (Netlify + GitHub workflow).
 - Entry file: `index.html`
 - Publish directory: project root (`.`)
 - Netlify config: `netlify.toml`
-- Canonical domain: `https://aiscwalkingcpr.org/`
+- Website: `https://aiscwalkingcpr.org/`
 
 ## SEO + Analytics
 
